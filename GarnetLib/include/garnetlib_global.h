@@ -1,0 +1,12 @@
+#ifndef GARNETLIB_GLOBAL_H
+#define GARNETLIB_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(GARNETLIB_LIBRARY)
+#  define GARNETLIBSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define GARNETLIBSHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // GARNETLIB_GLOBAL_H

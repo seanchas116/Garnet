@@ -20,7 +20,7 @@ unix:!symbian {
     INSTALLS += target
 }
 
-QMAKE_CXXFLAGS += -std=c++0x -stdlib=libc++
+CONFIG += c++11
 
 DESTDIR = $$PWD/bin
 INCLUDEPATH += include /usr/local/include

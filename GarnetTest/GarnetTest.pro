@@ -12,7 +12,7 @@ TEMPLATE = app
 SOURCES += tst_garnet.cpp
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
 
-QMAKE_CXXFLAGS += -std=c++0x -stdlib=libc++
+CONFIG += c++11
 
 INCLUDEPATH += $${PWD}/../GarnetLib/include /usr/local/include
 QMAKE_LFLAGS_RPATH += $${PWD}/../GarnetLib/bin

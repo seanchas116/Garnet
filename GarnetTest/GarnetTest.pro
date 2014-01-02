@@ -15,5 +15,4 @@ DEFINES += SRCDIR=\\\"$$PWD/\\\"
 CONFIG += c++11
 
 INCLUDEPATH += $${PWD}/../GarnetLib/include /usr/local/include
-QMAKE_LFLAGS_RPATH += $${PWD}/../GarnetLib/bin
 LIBS += -L$${PWD}/../GarnetLib/bin -lgarnet -L/usr/local/lib -lmruby

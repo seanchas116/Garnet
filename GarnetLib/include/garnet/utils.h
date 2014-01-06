@@ -17,7 +17,7 @@ namespace Garnet {
 void initialize();
 void registerMethods(mrb_state *mrb, RClass *garnet_class, const QMetaObject& object);
 
-namespace {
+namespace detail {
 
 template <class T>
 RClass* createClass(mrb_state *mrb)
@@ -45,14 +45,14 @@ void registerConstructor(mrb_state *mrb, RClass *garnet_class)
     mrb_define_method(mrb, garnet_class, "initialize", initialize_impl, ARGS_NONE());
 }
 
-} // anonymous namespace
+} // namespace detail
 
 template <class T>
 void registerClass(mrb_state *mrb)
 {
     initialize();
-    RClass *garnet_class = createClass<T>(mrb);
-    registerConstructor<T>(mrb, garnet_class);
+    RClass *garnet_class = detail::createClass<T>(mrb);
+    detail::registerConstructor<T>(mrb, garnet_class);
     registerMethods(mrb, garnet_class, T::staticMetaObject);
 }
 

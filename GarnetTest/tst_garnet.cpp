@@ -22,6 +22,8 @@ private Q_SLOTS:
     void numericArgsTest();
     void variadicArgsTest();
     void propertyTest();
+    void dynamicMethodTest();
+    void dynamicPropertyTest();
 
 private:
     mrb_state *mrb_ = mrb_open();
@@ -60,6 +62,9 @@ GarnetTest::GarnetTest()
 {
     mrb_ = mrb_open();
     Garnet::registerClass<TestObject>(mrb_);
+    auto testObject = new TestObject();
+    testObject->setParent(this);
+    Garnet::registerDynamicObject(mrb_, "test_object", testObject);
 }
 
 GarnetTest::~GarnetTest()
@@ -93,6 +98,18 @@ void GarnetTest::variadicArgsTest()
 void GarnetTest::propertyTest()
 {
     QString result = runScript("o = TestObject.new; o.name = 'zzzz'; o.name").toString();
+    QCOMPARE(result, QString("zzzz"));
+}
+
+void GarnetTest::dynamicMethodTest()
+{
+    QString result = runScript("test_object.variantArgs(1234, 13.4, 'Hello')").toString();
+    QCOMPARE(result, QString("1247.4-Hello"));
+}
+
+void GarnetTest::dynamicPropertyTest()
+{
+    QString result = runScript("test_object.name = 'zzzz'; test_object.name").toString();
     QCOMPARE(result, QString("zzzz"));
 }
 

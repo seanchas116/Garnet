@@ -56,6 +56,8 @@ void registerClass(mrb_state *mrb)
     registerMethods(mrb, garnet_class, T::staticMetaObject);
 }
 
+void registerDynamicObject(mrb_state *mrb, const QByteArray &name, QObject *object);
+
 } // namespace Garnet
 
 #endif // GARNET_UTILS_H

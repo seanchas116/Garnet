@@ -8,6 +8,9 @@ namespace Garnet {
 
 namespace {
 
+// To prevent memory leaks caused by mruby exceptions (which use longjmp),
+// all local variables that are used in every scope which may be jumped out by them
+// must have trivial destructors
 class MethodCall
 {
 public:
@@ -38,39 +41,45 @@ public:
         meta_object_ = object_->metaObject();
     }
 
-    void callMethod(mrb_value *result)
+    mrb_value callMethod()
     {
-        if (!tryCallMethod(result)) {
-            setNoMethodError();
+        mrb_value result;
+        if (!tryCallMethod(&result)) {
+            raiseNoMethodError();
         }
+        return result;
     }
 
-    void accessProperty(mrb_value *result)
+    mrb_value accessProperty()
     {
-        if (!tryAccessProperty(result)) {
-            setNoMethodError();
+        mrb_value result;
+        if (!tryAccessProperty(&result)) {
+            raiseNoMethodError();
         }
+        return result;
     }
 
-    void callAutomatically(mrb_value *result)
+    mrb_value callAutomatically()
     {
-        if (!tryAccessProperty(result) && !tryCallMethod(result)) {
-            setNoMethodError();
+        mrb_value result;
+        if (!tryAccessProperty(&result) && !tryCallMethod(&result)) {
+            raiseNoMethodError();
         }
+        return result;
     }
 
-    QMetaMethod calledMethod()
+    int calledMethodIndex()
     {
         for (int i = 0; i < meta_object_->methodCount(); ++i) {
             QMetaMethod method = meta_object_->method(i);
             if (strcmp(method_name_, method.name()) == 0) {
-                return method;
+                return i;
             }
         }
-        return QMetaMethod();
+        return -1;
     }
 
-    QMetaProperty accessedProperty(bool *is_setter)
+    int accessedPropertyIndex(bool *is_setter)
     {
         QByteArray property_name = method_name_;
         if (property_name.endsWith("=")) {
@@ -79,26 +88,16 @@ public:
         } else {
             *is_setter = false;
         }
-        return meta_object_->property(meta_object_->indexOfProperty(property_name.data()));
-    }
-
-    // this function may prevent destructors of local variables from not being called properly
-    // because mrb_raisef uses longjmp
-    static void handleError(mrb_state *mrb)
-    {
-        if (error.occured) {
-            error.occured = false;
-            mrb_raisef(mrb, error.klass, error.format, error.arg1, error.arg2);
-        }
+        return meta_object_->indexOfProperty(property_name.data());
     }
 
 private:
 
     bool tryCallMethod(mrb_value *result)
     {
-        auto found_method = calledMethod();
+        auto method_index = calledMethodIndex();
 
-        if (!found_method.isValid()) {
+        if (method_index == -1) {
             return false;
         }
 
@@ -114,14 +113,15 @@ private:
             mrb_get_args(mrb, "n*", &method_sym, &argv, &argc);
         }
 
+        auto found_method = meta_object_->method(method_index);
+
         int object_argc = found_method.parameterCount();
 
         bool has_vlist = (object_argc > 0 && (found_method.parameterType(object_argc - 1) == qMetaTypeId<QVariantList>()));
         if (has_vlist) object_argc--;
 
         if (argc < object_argc || (argc > object_argc && !has_vlist)) {
-             setWrongNumberOfArgumentsError(argc, object_argc);
-             return true;
+             raiseWrongNumberOfArgumentsError(argc, object_argc);
         }
 
         QVariant variants[10];
@@ -170,9 +170,9 @@ private:
     bool tryAccessProperty(mrb_value *result)
     {
         bool setter;
-        auto found_property = accessedProperty(&setter);
+        int property_index = accessedPropertyIndex(&setter);
 
-        if (!found_property.isValid()) {
+        if (property_index == -1) {
             return false;
         }
 
@@ -186,50 +186,40 @@ private:
                 mrb_sym method_sym;
                 mrb_get_args(mrb, "no", &method_sym, &value);
             }
-            found_property.write(object_, Variant(mrb, value));
+            meta_object_->property(property_index).write(object_, Variant(mrb, value));
         }
 
-        *result = Variant(found_property.read(object_)).toValue(mrb);
+        *result = Variant(meta_object_->property(property_index).read(object_)).toValue(mrb);
         return true;
     }
 
-    void setNoMethodError()
+    [[noreturn]] void raiseNoMethodError()
     {
         auto mrb = mrb_;
-        error.occured = true;
-        error.klass = E_NOMETHOD_ERROR;
-        error.format = "undefined method '%S' for %S";
-        error.arg1 = mrb_str_new_cstr(mrb, method_name_);
-        error.arg2 = mrb_str_new_cstr(mrb, meta_object_->className());
+        mrb_raisef(mrb, E_NOMETHOD_ERROR,
+                   "undefined method '%S' for %S",
+                   mrb_str_new_cstr(mrb, method_name_),
+                   mrb_str_new_cstr(mrb, meta_object_->className()));
     }
 
-    void setWrongNumberOfArgumentsError(int wrong, int correct)
+    [[noreturn]] void raiseWrongNumberOfArgumentsError(int wrong, int correct)
     {
         auto mrb = mrb_;
-        error.occured = true;
-        error.klass = E_ARGUMENT_ERROR;
-        error.format = "wrong number of arguments (%S for %S)";
-        error.arg1 = mrb_fixnum_value(wrong);
-        error.arg2 = mrb_fixnum_value(correct);
+        mrb_raisef(mrb, E_ARGUMENT_ERROR,
+                   "wrong number of arguments (%S for %S)",
+                   mrb_fixnum_value(wrong),
+                   mrb_fixnum_value(correct));
     }
 
+    // all member variables have trivial destructors
+    // to prevent memory leaks caused by mruby exceptions
     mrb_state *mrb_;
     mrb_value self_;
     Mode mode_;
     const char *method_name_;
     const QMetaObject *meta_object_;
     QObject *object_;
-
-    struct Error {
-        bool occured = false;
-        RClass *klass;
-        const char *format;
-        mrb_value arg1, arg2;
-    };
-    static Error error;
 };
-
-MethodCall::Error MethodCall::error;
 
 } // anonymous namespace
 
@@ -242,10 +232,7 @@ void registerMethods(mrb_state *mrb, RClass *garnet_class,const QMetaObject& obj
             const char *method_name = method.name();
 
             auto method_impl = [](mrb_state *mrb, mrb_value self) -> mrb_value {
-                mrb_value result;
-                MethodCall(mrb, self, MethodCall::Mode::Static).callMethod(&result);
-                MethodCall::handleError(mrb);
-                return result;
+                return MethodCall(mrb, self, MethodCall::Mode::Static).callMethod();
             };
 
             mrb_define_method(mrb, garnet_class, method_name, method_impl, ARGS_NONE());
@@ -259,10 +246,7 @@ void registerMethods(mrb_state *mrb, RClass *garnet_class,const QMetaObject& obj
         const char *property_name = property.name();
 
         auto method_impl = [](mrb_state *mrb, mrb_value self) -> mrb_value {
-            mrb_value result;
-            MethodCall(mrb, self, MethodCall::Mode::Static).accessProperty(&result);
-            MethodCall::handleError(mrb);
-            return result;
+            return MethodCall(mrb, self, MethodCall::Mode::Static).accessProperty();
         };
 
         QString getter_method_name = property_name;
@@ -357,19 +341,15 @@ void initializeDynamicClass(mrb_state *mrb)
         return self;
     };
     auto method_missing_impl = [](mrb_state *mrb, mrb_value self) {
-        mrb_value result;
-        MethodCall(mrb, self, MethodCall::Mode::Dynamic).callAutomatically(&result);
-        MethodCall::handleError(mrb);
-        return result;
+        return MethodCall(mrb, self, MethodCall::Mode::Dynamic).callAutomatically();
     };
     auto respond_to_missing_p_impl = [](mrb_state *mrb, mrb_value self) {
         bool result;
         {
             MethodCall call(mrb, self, MethodCall::Mode::Dynamic);
             bool setter;
-            result = call.accessedProperty(&setter).isValid() && call.calledMethod().isValid();
+            result = call.accessedPropertyIndex(&setter) != -1 && call.calledMethodIndex() != -1;
         }
-        MethodCall::handleError(mrb);
         return mrb_bool_value(result);
     };
 

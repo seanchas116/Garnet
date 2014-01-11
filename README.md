@@ -6,47 +6,75 @@ mruby bindings for QObject
 ## Basic
 
 ```cpp
-/* printer.h */
-
-#include <iostream>
-#include <garnet.h>
-
-class Printer : public Garnet::Object {
+// printer.h
+class Printer : public QObject {
     Q_OBJECT
 
-public slots:
-    void print(const QString& str)
+public:
+    Q_INVOKABLE void print(const QString& str)
     {
-        std::cout << str.toStdString() << std::endl;
+        qDebug() << str;
     }
 };
 ```
 
 ```cpp
-/* main.cpp */
-
-#include <mruby.h>
-#include <mruby/compile.h>
+// main.cpp
 #include "printer.h"
+#include <garnet.h>
 
 int main(int argc, char *argv[])
 {
-    mrb_state *mrb = mrb_open();
-    Garnet::registerClass<Printer>(mrb);
+    Garnet::Engine engine;
+    Printer printer;
+    engine.registerObject("printer", &printer);
 
-    const char *script = " Printer.new.print('Hello world!') ";
-    mrb_load_string(mrb, script);
+    QString script = "printer.print('Hello, world!')";
+    engine.evaluate(script);
 
-    mrb_close(mrb);
     return 0;
 }
+```
+
+## Use existing objects
+
+```cpp
+// C++
+
+Garnet::Engine engine;
+Person alice;
+engine.registerObject("alice", &alice);
+
+engine.evaluate("alice.greet");
+```
+
+## Create objects in mruby
+
+```cpp
+// person.h
+
+class Person : public QObject {
+    Q_OBJECT
+
+public:
+    Q_INVOKABLE Person(const QString &name);
+};
+```
+
+```cpp
+// C++
+
+Garnet::Engine engine;
+engine.registerClass<Person>();
+
+engine.evaluate("Person.new('Bob').greet");
 ```
 
 ## Properties
 
 ```cpp
 // C++
-class Friend : public Garnet::Object {
+class Friend : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString name MEMBER name_)
     Q_PROPERTY(int age MEMBER age_)
@@ -66,10 +94,10 @@ f.age = 24
 ## Return value
 ```cpp
 // C++
-class Calculator : public Garnet::Object {
+class Calculator : public QObject {
     Q_OBJECT
-public slots:
-    double add(double a, double b)
+public:
+    Q_INVOKABLE double add(double a, double b)
     {
         return a + b;
     }
@@ -78,29 +106,28 @@ public slots:
 
 ```cpp
 // C++
-const char *script = " Calculator.new.add(12.3, 22.8) ";
-mrb_value value = mrb_load_string(mrb, script);
-QVariant result = Garnet::Variant(mrb, value);
-std::cout << result.toDouble() << std::endl;
+Garnet::Engine engine;
+
+QString script = " Calculator.new.add(12.3, 22.8) ";
+Garnet::Value result = engine.evaluate(script);
+qDebug() <<  result.toDouble();
 ```
 
 ## Variant Arguments
 ```cpp
 // C++
-class JukeBox : public Garnet::Object {
+class JukeBox : public QObject {
     Q_OBJECT
-public slots:
-    void insertCoin(const QVariant& value)
+public:
+    Q_INVOKABLE void insertCoin(const QVariant& value)
     {
-        using namespace std;
-        
         bool ok = false;
         value.toInt(&ok);
         if (ok) {
-            cout << "Thanks!" << endl;
+            qDebug() << "Thanks!";
         }
         else {
-            cout << "Please insert coin!" << endl;
+            qDebug() << "Please insert coin!";
         }
     }
 };
@@ -113,21 +140,20 @@ j.insertCoin(100)
 j.insertCoin('zzz...')
 ```
 
-## Variable Arguments
+## Variadic Arguments
 
 ```cpp
 // C++
-class CommandList : public Garnet::Object {
+class CommandList : public QObject {
     Q_OBJECT
-public slots:
-    void add(QString& name, const QVariantList& options)
+public:
+    Q_INVOKABLE void add(QString& name, const Garnet::VariadicArgument& options)
     {
-        using namespace std;
-        cout << name.toStdString() << endl;
+        qDebug() << name.toStdString();
         
-        cout << "with options: " << endl;
-        foreach (const QVariant& option, options) {
-            cout << option.toString().toStdString() << endl;
+        qDebug() << "with options: ";
+        foreach (const QVariant& option, options.toList()) {
+            qDebug() << option.toString();
         }
     }
 };
@@ -137,4 +163,65 @@ public slots:
 # mruby
 t = CommandList.new
 t.add("grep", "-r", "-n")
+```
+
+## Use QML objects
+
+```qml
+// Product.qml
+QtObject {
+    property int price: 50
+    function discount(diff) {
+        price -= Math.floor(diff * Math.random())
+    }
+}
+```
+
+```cpp
+// C++
+QQmlEngine qmlEngine;
+QQmlComponent component(&qmlEngine, QUrl("qrc:///Product.qml"));
+auto product = component.create();
+
+Garnet::Engine engine;
+engine.registerObject("product", product);
+```
+
+```ruby
+// mruby
+product.price = 100
+product.discount(10)
+```
+
+## Value conversion between Qt and mruby
+
+* bool <-> TrueClass, FalseClass
+* int, other integer types <-> Fixnum
+* double, float <-> Float
+* QString <-> String
+* QVariantList <-> Array
+* QVariantHash, QVariantMap <-> Hash
+
+When mruby Hash objects are converted into QVariantHash / QVariantMap objects,
+non-string keys are converted into string by the to_s method.
+
+## Garbage collection
+
+QObject instences used in mruby are garbage collected
+only if they are created in mruby and they have no parent.
+
+```cpp
+// C++
+
+Garnet::Engine engine;
+Person person;
+engine.registerObject("person", &person);
+engine.registerClass<Person>();
+```
+
+```ruby
+# mruby
+
+p1 = person     # will never be garbage collected
+p2 = Person.new # will be garbage collected
 ```

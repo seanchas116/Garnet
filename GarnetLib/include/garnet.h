@@ -1,8 +1,7 @@
 #ifndef GARNET_H
 #define GARNET_H
 
-#include "garnet/utils.h"
-#include "garnet/object.h"
-#include "garnet/variant.h"
+#include "garnet/engine.h"
+#include "garnet/value.h"
 
 #endif // GARNET_H

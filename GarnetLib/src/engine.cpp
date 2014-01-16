@@ -144,12 +144,12 @@ QVariant Engine::evaluate(const QString &script, const QString &fileName)
     return Conversion::toQVariant(mrb, value);
 }
 
-QString Engine::error()
+QString Engine::error() const
 {
     return d->error_;
 }
 
-QStringList Engine::backtrace()
+QStringList Engine::backtrace() const
 {
     return d->backtrace_;
 }

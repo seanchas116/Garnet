@@ -15,22 +15,23 @@ class Value;
 class Engine : public QObject
 {
     Q_OBJECT
+
 public:
 
     explicit Engine(QObject *parent = 0);
     explicit Engine(mrb_state *mrb, QObject *parent = 0);
     ~Engine();
 
-    void collectGarbage();
-    QVariant evaluate(const QString &script, const QString &fileName = "*script*");
+    Q_INVOKABLE void collectGarbage();
+    Q_INVOKABLE QVariant evaluate(const QString &script, const QString &fileName = "*script*");
 
-    QString error();
-    QStringList backtrace();
+    Q_INVOKABLE QString error() const;
+    Q_INVOKABLE QStringList backtrace() const;
 
     template <class T> void registerClass() { registerClass(&T::staticMetaObject); }
     void registerClass(const QMetaObject *metaObject);
-    void registerObject(const QString &name, QObject *object);
-    void registerVariant(const QString &name, const QVariant &variant);
+    Q_INVOKABLE void registerObject(const QString &name, QObject *object);
+    Q_INVOKABLE void registerVariant(const QString &name, const QVariant &variant);
 
     mrb_state *mrbState();
     BridgeClass &bridgeClass();

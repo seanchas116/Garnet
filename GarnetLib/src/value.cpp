@@ -221,6 +221,12 @@ class Value::Private
 public:
     mrb_state *mrb_;
     mrb_value value_;
+
+    mrb_vtype valueType()
+    {
+        return mrb_type(value_);
+    }
+
 };
 
 Value::Value(mrb_state *mrb, mrb_value value) :
@@ -268,6 +274,48 @@ mrb_state *Value::mrbState()
 mrb_value Value::mrbValue()
 {
     return d->value_;
+}
+
+bool Value::isQObject() const
+{
+    return d->valueType() == MRB_TT_DATA &&
+           DATA_TYPE(d->value_) == &BridgeData::dataType;
+}
+
+bool Value::isBoolean() const
+{
+    return d->valueType() == MRB_TT_TRUE &&
+           d->valueType() == MRB_TT_FALSE;
+}
+
+bool Value::isFixnum() const
+{
+    return d->valueType() == MRB_TT_FIXNUM;
+}
+
+bool Value::isFloat() const
+{
+    return d->valueType() == MRB_TT_FLOAT;
+}
+
+bool Value::isString() const
+{
+    return d->valueType() == MRB_TT_STRING;
+}
+
+bool Value::isSymbol() const
+{
+    return d->valueType() == MRB_TT_SYMBOL;
+}
+
+bool Value::isArray() const
+{
+    return d->valueType() == MRB_TT_ARRAY;
+}
+
+bool Value::isHash() const
+{
+    return d->valueType() == MRB_TT_HASH;
 }
 
 QVariant Value::toVariant()

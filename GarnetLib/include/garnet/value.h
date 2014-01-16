@@ -20,6 +20,15 @@ public:
     Value(const Value &other);
     Value &operator=(const Value &other);
 
+    bool isQObject() const;
+    bool isBoolean() const;
+    bool isFixnum() const;
+    bool isFloat() const;
+    bool isString() const;
+    bool isSymbol() const;
+    bool isArray() const;
+    bool isHash() const;
+
     QVariant toVariant();
 
     QObject *toQObject();

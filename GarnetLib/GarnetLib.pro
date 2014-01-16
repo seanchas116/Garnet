@@ -9,16 +9,16 @@ DEFINES += GARNETLIB_LIBRARY
 
 SOURCES += \
     src/engine.cpp \
-    src/value.cpp \
     src/bridgeclass.cpp \
-    src/bridgecall.cpp
+    src/bridgecall.cpp \
+    src/conversion.cpp
 
 HEADERS += include/garnet.h include/garnetlib_global.h \
 	include/garnet/engine.h \
-	include/garnet/value.h \
     src/bridgeclass.h \
     src/bridgecall.h \
-    include/garnet/variadicargument.h
+    include/garnet/variadicargument.h \
+	include/garnet/conversion.h
 
 unix:!symbian {
     maemo5 {

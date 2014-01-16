@@ -1,7 +1,7 @@
 #include "garnet/engine.h"
-#include "garnet/value.h"
 #include "garnet/variadicargument.h"
 #include "bridgeclass.h"
+#include "garnet/conversion.h"
 
 #include <QVariant>
 
@@ -39,13 +39,13 @@ public:
 
         auto exc = mrb_obj_value(mrb_->exc);
 
-        auto backtraceVlist = Value(mrb_, mrb_funcall(mrb_, exc, "backtrace", 0)).toList();
+        auto backtraceVlist = Conversion::toQVariant(mrb_, mrb_funcall(mrb_, exc, "backtrace", 0)).toList();
         backtrace_.reserve(backtraceVlist.size());
         for (const auto &v : backtraceVlist) {
             backtrace_ << v.toString();
         }
 
-        error_ = Value(mrb_, mrb_funcall(mrb_, exc, "inspect", 0)).toString();
+        error_ = Conversion::toQVariant(mrb_, mrb_funcall(mrb_, exc, "inspect", 0)).toString();
 
         mrb_->exc = nullptr;
     }
@@ -140,7 +140,7 @@ QVariant Engine::evaluate(const QString &script, const QString &fileName)
 
     mrb_gc_arena_restore(mrb, arena);
 
-    return Value(mrb, value).toVariant();
+    return Conversion::toQVariant(mrb, value);
 }
 
 QString Engine::error()
@@ -170,7 +170,7 @@ void Engine::registerVariant(const QString &name, const QVariant &variant)
     auto methodImpl = [](mrb_state *mrb, mrb_value self) {
         Q_UNUSED(self);
         auto name = mrb_sym2name(mrb, mrb->c->ci->mid);
-        return Value::mrbValueFromVariant(mrb, findByMrb(mrb)->d->registeredVariants_[name]);
+        return Conversion::toMrbValue(mrb, findByMrb(mrb)->d->registeredVariants_[name]);
     };
     mrb_define_method(d->mrb_, d->mrb_->object_class, byteArray, methodImpl, ARGS_NONE());
 }

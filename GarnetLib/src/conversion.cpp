@@ -1,6 +1,6 @@
-#include "garnet/value.h"
-#include "bridgeclass.h"
+#include "garnet/conversion.h"
 #include "garnet/engine.h"
+#include "bridgeclass.h"
 #include <mruby/string.h>
 #include <mruby/array.h>
 #include <mruby/hash.h>
@@ -8,15 +8,12 @@
 
 namespace Garnet {
 
+namespace Conversion {
+
 namespace {
 
-namespace Converters {
-
-QHash<int, Value::FromVariant> convertersFromVariant;
-QList<Value::ToVariant> convertersToVariant;
-
-mrb_value qVariantToValue(mrb_state *mrb, const QVariant &value);
-QVariant qVariantFromValue(mrb_state *mrb, mrb_value value);
+QHash<int, ToValue> convertersToValue;
+QList<ToVariant> convertersToVariant;
 
 mrb_value qStringToString(mrb_state *mrb, const QString &str)
 {
@@ -41,7 +38,7 @@ mrb_value qVariantListToArray(mrb_state *mrb, const QVariantList &list)
 {
     QVector<mrb_value> values(list.size());
     std::transform(list.cbegin(), list.cend(), values.begin(), [&](const QVariant &variant) {
-        return qVariantToValue(mrb, variant);
+        return toMrbValue(mrb, variant);
     });
     return mrb_ary_new_from_values(mrb, values.size(), values.data());
 }
@@ -54,7 +51,7 @@ QVariantList qVariantListFromArray(mrb_state *mrb, mrb_value value)
     QVariantList list;
     list.reserve(size);
     for (int i = 0; i < size; ++i) {
-        list << qVariantFromValue(mrb, values[i]);
+        list << toQVariant(mrb, values[i]);
     }
     return list;
 }
@@ -64,7 +61,7 @@ mrb_value qVariantHashLikeToHash(mrb_state *mrb, const T &hash)
 {
     auto value = mrb_hash_new(mrb);
     for (auto i = hash.cbegin(); i != hash.cend(); ++i) {
-        mrb_hash_set(mrb, value, qStringToString(mrb, i.key()), qVariantToValue(mrb, i.value()));
+        mrb_hash_set(mrb, value, qStringToString(mrb, i.key()), toMrbValue(mrb, i.value()));
     }
     return value;
 }
@@ -98,7 +95,7 @@ QVariantHash qVariantHashLikeFromHash(mrb_state *mrb, mrb_value hash)
             break;
         }
 
-        resultHash[qStringKey] = qVariantFromValue(mrb, value);
+        resultHash[qStringKey] = toQVariant(mrb, value);
     }
 
     return resultHash;
@@ -115,7 +112,9 @@ mrb_value qObjectStarToBridgeClass(mrb_state *mrb, QObject *object)
     return Engine::findByMrb(mrb)->bridgeClass().newFromObject(object, false);
 }
 
-mrb_value qVariantToValue(mrb_state *mrb, const QVariant &variant)
+} // anonymous namespace
+
+mrb_value toMrbValue(mrb_state *mrb, const QVariant &variant)
 {
     auto type = variant.userType();
     switch (type) {
@@ -163,17 +162,17 @@ mrb_value qVariantToValue(mrb_state *mrb, const QVariant &variant)
         return qVariantHashLikeToHash(mrb, variant.toMap());
 
     case QMetaType::QVariant:
-        return qVariantToValue(mrb, variant.value<QVariant>());
+        return toMrbValue(mrb, variant.value<QVariant>());
 
     default:
-        if (convertersFromVariant.contains(type)) {
-            return convertersFromVariant[type](mrb, variant);
+        if (convertersToValue.contains(type)) {
+            return convertersToValue[type](mrb, variant);
         }
         return mrb_nil_value();
     }
 }
 
-QVariant qVariantFromValue(mrb_state *mrb, mrb_value value)
+QVariant toQVariant(mrb_state *mrb, mrb_value value)
 {
     if (mrb_string_p(value)) {
         return qStringFromString(mrb, value);
@@ -212,137 +211,24 @@ QVariant qVariantFromValue(mrb_state *mrb, mrb_value value)
     }
 }
 
-} // namespace Converters
-
-} // anonymous namespace
-
-class Value::Private
+QObject *toQObject(mrb_state *mrb, mrb_value value)
 {
-public:
-    mrb_state *mrb_;
-    mrb_value value_;
-
-    mrb_vtype valueType()
-    {
-        return mrb_type(value_);
-    }
-
-};
-
-Value::Value(mrb_state *mrb, mrb_value value) :
-    d(new Private())
-{
-    d->mrb_ = mrb;
-    d->value_ = value;
+    return toQVariant(mrb, value).value<QObject *>();
 }
 
-Value::~Value()
-{
-}
-
-Value::Value(const Value &other) :
-    d(new Private(*other.d))
-{
-}
-
-Value &Value::operator =(const Value &other)
-{
-    d.reset(new Private(*other.d));
-    return *this;
-}
-
-Value Value::fromObject(mrb_state *mrb, QObject *object)
-{
-    return Value::fromVariant(mrb, QVariant::fromValue(object));
-}
-
-Value Value::fromVariant(mrb_state *mrb, const QVariant &variant)
-{
-    return Value(mrb, Converters::qVariantToValue(mrb, variant));
-}
-
-mrb_value Value::mrbValueFromVariant(mrb_state *mrb, const QVariant &variant)
-{
-    return Converters::qVariantToValue(mrb, variant);
-}
-
-mrb_state *Value::mrbState()
-{
-    return d->mrb_;
-}
-
-mrb_value Value::mrbValue()
-{
-    return d->value_;
-}
-
-bool Value::isQObject() const
-{
-    return d->valueType() == MRB_TT_DATA &&
-           DATA_TYPE(d->value_) == &BridgeData::dataType;
-}
-
-bool Value::isBoolean() const
-{
-    return d->valueType() == MRB_TT_TRUE &&
-           d->valueType() == MRB_TT_FALSE;
-}
-
-bool Value::isFixnum() const
-{
-    return d->valueType() == MRB_TT_FIXNUM;
-}
-
-bool Value::isFloat() const
-{
-    return d->valueType() == MRB_TT_FLOAT;
-}
-
-bool Value::isString() const
-{
-    return d->valueType() == MRB_TT_STRING;
-}
-
-bool Value::isSymbol() const
-{
-    return d->valueType() == MRB_TT_SYMBOL;
-}
-
-bool Value::isArray() const
-{
-    return d->valueType() == MRB_TT_ARRAY;
-}
-
-bool Value::isHash() const
-{
-    return d->valueType() == MRB_TT_HASH;
-}
-
-QVariant Value::toVariant()
-{
-    return Converters::qVariantFromValue(d->mrb_, d->value_);
-}
-
-QObject *Value::toQObject()
-{
-    auto variant = toVariant();
-    if (variant.userType() == QMetaType::QObjectStar) {
-        return variant.value<QObject *>();
-    } else {
-        return nullptr;
-    }
-}
-
-void Value::registerConverter(const QList<int> &metaTypes, const FromVariant func)
+void registerConverter(const QList<int> &metaTypes, const ToValue func)
 {
     for (int metaType : metaTypes) {
-        Converters::convertersFromVariant[metaType] = func;
+        convertersToValue[metaType] = func;
     }
 }
 
-void Value::registerConverter(const ToVariant func)
+void registerConverter(const ToVariant func)
 {
-    Converters::convertersToVariant << func;
+    convertersToVariant << func;
 }
+
+
+} // namespace Conversion
 
 } // namespace Garnet

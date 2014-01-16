@@ -1,5 +1,4 @@
 #include "bridgeclass.h"
-#include "garnet/value.h"
 #include "bridgecall.h"
 #include "garnet/engine.h"
 #include <mruby/class.h>

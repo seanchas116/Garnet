@@ -1,5 +1,5 @@
 #include "bridgecall.h"
-#include "garnet/value.h"
+#include "garnet/conversion.h"
 #include "garnet/variadicargument.h"
 #include <QObject>
 #include <QMetaObject>
@@ -19,7 +19,7 @@ QVariantList getVariantParams(mrb_state *mrb)
     QVariantList params;
     params.reserve(argc);
     for (int i = 0; i < argc; ++i) {
-        params << Value(mrb, argv[i]).toVariant();
+        params << Conversion::toQVariant(mrb, argv[i]);
     }
     return params;
 }
@@ -112,7 +112,7 @@ bool tryInvokeMethod(QObject *object, const QMetaMethod &method, const QVariantL
 BridgeCall::BridgeCall(mrb_state *mrb, mrb_value self) :
     mrb_(mrb)
 {
-    object_ = Value(mrb, self).toQObject();
+    object_ = Conversion::toQObject(mrb, self);
     methodName_ = mrb_sym2name(mrb, mrb->c->ci->mid);
     metaObject_ = object_->metaObject();
 }
@@ -179,7 +179,7 @@ mrb_value BridgeCall::callMethod()
             }
         }
         if (invoked) {
-            return Value::fromVariant(mrb, returnValue).mrbValue();
+            return Conversion::toMrbValue(mrb, returnValue);
         }
     }
 
@@ -212,9 +212,9 @@ mrb_value BridgeCall::accessProperty(bool setter)
             }
             mrb_value value;
             mrb_get_args(mrb, "o", &value);
-            property.write(object_, Value(mrb, value).toVariant());
+            property.write(object_, Conversion::toQVariant(mrb, value));
         }
-        return Value::mrbValueFromVariant(mrb, property.read(object_));
+        return Conversion::toMrbValue(mrb, property.read(object_));
     }
     while (false);
 

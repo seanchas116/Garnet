@@ -1,6 +1,7 @@
 #include "bridgecall.h"
 #include "conversion.h"
 #include "variadicargument.h"
+#include "utils.h"
 #include <QObject>
 #include <QMetaObject>
 #include <QMetaMethod>
@@ -12,6 +13,7 @@ namespace {
 
 QVariantList getVariantParams(mrb_state *mrb)
 {
+    ArenaSaver as(mrb);
     mrb_value *argv = nullptr;
     int argc = 0;
     mrb_get_args(mrb, "*", &argv, &argc);

@@ -1,6 +1,7 @@
 #include "conversion.h"
 #include "engine.h"
 #include "bridgeclass.h"
+#include "utils.h"
 #include <mruby/string.h>
 #include <mruby/array.h>
 #include <mruby/hash.h>
@@ -36,11 +37,12 @@ QString qStringFromSymbol(mrb_state *mrb, mrb_value value)
 
 mrb_value qVariantListToArray(mrb_state *mrb, const QVariantList &list)
 {
-    QVector<mrb_value> values(list.size());
-    std::transform(list.cbegin(), list.cend(), values.begin(), [&](const QVariant &variant) {
-        return toMrbValue(mrb, variant);
-    });
-    return mrb_ary_new_from_values(mrb, values.size(), values.data());
+    auto value = mrb_ary_new(mrb);
+    for (const auto &variant : list) {
+        ArenaSaver as(mrb);
+        mrb_ary_push(mrb, value, toMrbValue(mrb, variant));
+    }
+    return value;
 }
 
 QVariantList qVariantListFromArray(mrb_state *mrb, mrb_value value)
@@ -61,6 +63,7 @@ mrb_value qVariantHashLikeToHash(mrb_state *mrb, const T &hash)
 {
     auto value = mrb_hash_new(mrb);
     for (auto i = hash.cbegin(); i != hash.cend(); ++i) {
+        ArenaSaver as(mrb);
         mrb_hash_set(mrb, value, qStringToString(mrb, i.key()), toMrbValue(mrb, i.value()));
     }
     return value;
@@ -69,6 +72,7 @@ mrb_value qVariantHashLikeToHash(mrb_state *mrb, const T &hash)
 template <class T>
 QVariantHash qVariantHashLikeFromHash(mrb_state *mrb, mrb_value hash)
 {
+    ArenaSaver as(mrb);
     T resultHash;
 
     auto keys = mrb_hash_keys(mrb, hash);
@@ -77,6 +81,7 @@ QVariantHash qVariantHashLikeFromHash(mrb_state *mrb, mrb_value hash)
     resultHash.reserve(count);
 
     for (int i = 0; i < count; ++i) {
+        ArenaSaver as(mrb);
 
         auto key = keyPtr[i];
         auto value = mrb_hash_get(mrb, hash, key);
@@ -174,10 +179,6 @@ mrb_value toMrbValue(mrb_state *mrb, const QVariant &variant)
 
 QVariant toQVariant(mrb_state *mrb, mrb_value value)
 {
-    if (mrb_string_p(value)) {
-        return qStringFromString(mrb, value);
-    }
-
     switch (mrb_type(value)) {
     case MRB_TT_TRUE:
         return true;

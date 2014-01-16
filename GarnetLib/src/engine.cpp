@@ -2,6 +2,7 @@
 #include "variadicargument.h"
 #include "bridgeclass.h"
 #include "conversion.h"
+#include "utils.h"
 
 #include <QVariant>
 
@@ -36,6 +37,8 @@ public:
     {
         if (!mrb_->exc)
             return;
+
+        ArenaSaver as(mrb_);
 
         auto exc = mrb_obj_value(mrb_->exc);
 
@@ -129,7 +132,7 @@ void Engine::collectGarbage()
 QVariant Engine::evaluate(const QString &script, const QString &fileName)
 {
     auto mrb = d->mrb_;
-    auto arena = mrb_gc_arena_save(mrb);
+    ArenaSaver as(mrb);
 
     auto context = mrbc_context_new(mrb);
 
@@ -137,8 +140,6 @@ QVariant Engine::evaluate(const QString &script, const QString &fileName)
     auto value = mrb_load_string_cxt(mrb, script.toUtf8().data(), context);
     mrbc_context_free(mrb, context);
     d->dumpError();
-
-    mrb_gc_arena_restore(mrb, arena);
 
     return Conversion::toQVariant(mrb, value);
 }

@@ -63,7 +63,7 @@ void TestGarnetValue::testHash()
 void TestGarnetValue::testSymbolToString()
 {
     Garnet::Engine engine;
-    auto result = engine.evaluate(":some_symbol").toVariant().toString();
+    auto result = engine.evaluate(":some_symbol").toString();
     QCOMPARE(result, QString("some_symbol"));
 }
 

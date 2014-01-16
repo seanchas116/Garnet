@@ -73,7 +73,7 @@ void TestGarnetBridgeClass::testObjectOwnership()
         Garnet::Engine engine;
         engine.registerObject("test_cpp", testCpp);
         engine.registerClass<TestObject>();
-        testMrb = engine.evaluate("test_cpp; TestObject.new").toQObject();
+        testMrb = engine.evaluate("test_cpp; TestObject.new").value<QObject *>();
     }
     QVERIFY(!testCpp.isNull());
     QVERIFY(testMrb.isNull());

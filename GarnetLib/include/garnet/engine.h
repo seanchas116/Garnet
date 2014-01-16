@@ -22,8 +22,10 @@ public:
     ~Engine();
 
     void collectGarbage();
-    Value evaluate(const QString &script);
-    QVariant evaluateIntoVariant(const QString &script);
+    QVariant evaluate(const QString &script, const QString &fileName = "*script*");
+
+    QString error();
+    QStringList backtrace();
 
     template <class T> void registerClass() { registerClass(&T::staticMetaObject); }
     void registerClass(const QMetaObject *metaObject);

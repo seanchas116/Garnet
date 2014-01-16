@@ -25,9 +25,30 @@ public:
     QScopedPointer<StaticBridgeClassManager> staticBridgeClassManager;
     QHash<QByteArray, QVariant> registeredVariants_;
 
+    QString error_;
+    QStringList backtrace_;
+
     static QHash<mrb_state *, Engine *> engines_;
 
     static void initializeGlobal();
+
+    void dumpError()
+    {
+        if (!mrb_->exc)
+            return;
+
+        auto exc = mrb_obj_value(mrb_->exc);
+
+        auto backtraceVlist = Value(mrb_, mrb_funcall(mrb_, exc, "backtrace", 0)).toList();
+        backtrace_.reserve(backtraceVlist.size());
+        for (const auto &v : backtraceVlist) {
+            backtrace_ << v.toString();
+        }
+
+        error_ = Value(mrb_, mrb_funcall(mrb_, exc, "inspect", 0)).toString();
+
+        mrb_->exc = nullptr;
+    }
 };
 
 QHash<mrb_state *, Engine *> Engine::Private::engines_;
@@ -105,14 +126,31 @@ void Engine::collectGarbage()
     mrb_full_gc(d->mrb_);
 }
 
-Value Engine::evaluate(const QString &script)
+QVariant Engine::evaluate(const QString &script, const QString &fileName)
 {
-    return Value(d->mrb_, mrb_load_string(d->mrb_, script.toUtf8().data()));
+    auto mrb = d->mrb_;
+    auto arena = mrb_gc_arena_save(mrb);
+
+    auto context = mrbc_context_new(mrb);
+
+    mrbc_filename(mrb, context, fileName.toUtf8().data());
+    auto value = mrb_load_string_cxt(mrb, script.toUtf8().data(), context);
+    mrbc_context_free(mrb, context);
+    d->dumpError();
+
+    mrb_gc_arena_restore(mrb, arena);
+
+    return Value(mrb, value).toVariant();
 }
 
-QVariant Engine::evaluateIntoVariant(const QString &script)
+QString Engine::error()
 {
-    return evaluate(script).toVariant();
+    return d->error_;
+}
+
+QStringList Engine::backtrace()
+{
+    return d->backtrace_;
 }
 
 void Engine::registerClass(const QMetaObject *metaObject)

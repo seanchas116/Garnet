@@ -12,7 +12,8 @@ TEMPLATE = app
 SOURCES += \
     test.cpp \
     testgarnetvalue.cpp \
-    testgarnetbridgeclass.cpp
+    testgarnetbridgeclass.cpp \
+    testgarnetengine.cpp
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
 
 CONFIG += c++11
@@ -23,7 +24,8 @@ LIBS += -L$${PWD}/../GarnetLib/bin -lgarnet -L/usr/local/lib -lmruby
 HEADERS += \
     test.h \
     testgarnetvalue.h \
-    testgarnetbridgeclass.h
+    testgarnetbridgeclass.h \
+    testgarnetengine.h
 
 RESOURCES += \
     test.qrc

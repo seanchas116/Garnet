@@ -1,9 +1,18 @@
 Garnet
 ======
 
-mruby bindings for QObject
+Garnet provides mruby bindings for Qt objects.
 
-## Basic
+## Features
+
+* Run mruby scripts in Qt
+* Value conversions between Qt values and mruby values
+* Access properties and methods of QML objects and QObject-derived C++ objects
+
+
+## How to use
+
+### Basic
 
 ```cpp
 // printer.h
@@ -36,7 +45,7 @@ int main(int argc, char *argv[])
 }
 ```
 
-## Use existing objects
+### Use existing objects
 
 ```cpp
 // C++
@@ -48,7 +57,7 @@ engine.registerObject("alice", &alice);
 engine.evaluate("alice.greet");
 ```
 
-## Create objects in mruby
+### Create objects in mruby
 
 ```cpp
 // person.h
@@ -70,7 +79,7 @@ engine.registerClass<Person>();
 engine.evaluate("Person.new('Bob').greet");
 ```
 
-## Properties
+### Properties
 
 ```cpp
 // C++
@@ -91,7 +100,7 @@ f.name = "Daniel"
 f.age = 24
 ```
 
-## Return value
+### Return value
 ```cpp
 // C++
 class Calculator : public QObject {
@@ -113,7 +122,7 @@ Garnet::Value result = engine.evaluate(script);
 qDebug() <<  result.toDouble();
 ```
 
-## Variant Arguments
+### Variant Arguments
 ```cpp
 // C++
 class JukeBox : public QObject {
@@ -140,7 +149,7 @@ j.insertCoin(100)
 j.insertCoin('zzz...')
 ```
 
-## Variadic Arguments
+### Variadic Arguments
 
 ```cpp
 // C++
@@ -165,7 +174,7 @@ t = CommandList.new
 t.add("grep", "-r", "-n")
 ```
 
-## Use QML objects
+### Use QML objects
 
 ```qml
 // Product.qml
@@ -193,7 +202,7 @@ product.price = 100
 product.discount(10)
 ```
 
-## Value conversion between Qt and mruby
+### Value conversion between Qt and mruby
 
 * bool <-> TrueClass, FalseClass
 * int, other integer types <-> Fixnum
@@ -205,7 +214,7 @@ product.discount(10)
 When mruby Hash objects are converted into QVariantHash / QVariantMap objects,
 non-string keys are converted into string by the to_s method.
 
-## Garbage collection
+### Garbage collection
 
 QObject instences used in mruby are garbage collected
 only if they are created in mruby and they have no parent.
@@ -225,3 +234,8 @@ engine.registerClass<Person>();
 p1 = person     # will never be garbage collected
 p2 = Person.new # will be garbage collected
 ```
+
+## License
+
+Garnet is available under a dual-licensing (LGPL and MIT).
+

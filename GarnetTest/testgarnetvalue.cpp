@@ -1,7 +1,7 @@
 #include "testgarnetvalue.h"
 #include "test.h"
-#include "garnet/engine.h"
-#include "garnet/conversion.h"
+#include <Garnet/Engine>
+#include <Garnet/Conversion>
 
 TestGarnetValue::TestGarnetValue(QObject *parent) :
     QObject(parent)

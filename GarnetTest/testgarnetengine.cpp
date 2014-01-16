@@ -1,6 +1,6 @@
 #include "testgarnetengine.h"
 #include "test.h"
-#include <garnet.h>
+#include <Garnet/Engine>
 
 TestGarnetEngine::TestGarnetEngine(QObject *parent) :
     QObject(parent)

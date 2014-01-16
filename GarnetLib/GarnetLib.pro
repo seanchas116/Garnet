@@ -13,12 +13,12 @@ SOURCES += \
     src/bridgecall.cpp \
     src/conversion.cpp
 
-HEADERS += include/garnet.h include/garnetlib_global.h \
-	include/garnet/engine.h \
+HEADERS += src/garnetlib_global.h \
+	src/engine.h \
     src/bridgeclass.h \
     src/bridgecall.h \
-    include/garnet/variadicargument.h \
-	include/garnet/conversion.h
+	src/variadicargument.h \
+	src/conversion.h
 
 unix:!symbian {
     maemo5 {

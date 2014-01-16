@@ -1,6 +1,6 @@
 #include "bridgecall.h"
-#include "garnet/conversion.h"
-#include "garnet/variadicargument.h"
+#include "conversion.h"
+#include "variadicargument.h"
 #include <QObject>
 #include <QMetaObject>
 #include <QMetaMethod>

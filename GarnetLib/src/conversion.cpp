@@ -1,5 +1,5 @@
-#include "garnet/conversion.h"
-#include "garnet/engine.h"
+#include "conversion.h"
+#include "engine.h"
 #include "bridgeclass.h"
 #include <mruby/string.h>
 #include <mruby/array.h>

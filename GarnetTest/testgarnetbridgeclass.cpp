@@ -1,6 +1,6 @@
 #include "testgarnetbridgeclass.h"
 #include "test.h"
-#include "garnet/engine.h"
+#include <Garnet/Engine>
 #include <QQmlEngine>
 #include <QQmlComponent>
 

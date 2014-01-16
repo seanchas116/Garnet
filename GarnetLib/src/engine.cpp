@@ -1,7 +1,7 @@
-#include "garnet/engine.h"
-#include "garnet/variadicargument.h"
+#include "engine.h"
+#include "variadicargument.h"
 #include "bridgeclass.h"
-#include "garnet/conversion.h"
+#include "conversion.h"
 
 #include <QVariant>
 

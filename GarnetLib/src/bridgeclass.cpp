@@ -1,6 +1,6 @@
 #include "bridgeclass.h"
 #include "bridgecall.h"
-#include "garnet/engine.h"
+#include "engine.h"
 #include <mruby/class.h>
 #include <QMetaMethod>
 

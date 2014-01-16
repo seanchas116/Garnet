@@ -2,7 +2,7 @@
 #define TEST_H
 
 #include <QtTest>
-#include <garnet/variadicargument.h>
+#include <Garnet/VariadicArgument>
 
 class TestObject : public QObject
 {

@@ -30,7 +30,7 @@ public:
 ```cpp
 // main.cpp
 #include "printer.h"
-#include <garnet.h>
+#include <Garnet/Engine>
 
 int main(int argc, char *argv[])
 {

@@ -202,6 +202,41 @@ product.price = 100
 product.discount(10)
 ```
 
+### Use Garnet in QML
+
+```cpp
+// C++
+#include <Garnet/Engine>
+
+qmlRegisterType<Garnet::Engine>("Garnet", 1, 0, "Engine");
+```
+
+```qml
+// QML
+import Garnet 1.0 as Garnet
+
+Rectangle {
+    width: 360
+    height: 360
+    Text {
+        id: resultText
+        anchors.fill: parent
+    }
+    Garnet.Engine {
+        Component.onCompleted: {
+            registerObject("result_text", resultText)
+            engine.evaluate("result_text.text = 'Hello, world!'")
+        }
+    }
+}
+
+Garnet.Engine {
+    Component.onCompleted: {
+        console.log(engine.evaluate("'Helo, world!!'"))
+    }
+}
+```
+
 ### Value conversion between Qt and mruby
 
 * bool <-> TrueClass, FalseClass

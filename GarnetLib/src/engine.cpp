@@ -173,7 +173,7 @@ void Engine::registerVariant(const QString &name, const QVariant &variant)
         auto name = mrb_sym2name(mrb, mrb->c->ci->mid);
         return Conversion::toMrbValue(mrb, findByMrb(mrb)->d->registeredVariants_[name]);
     };
-    mrb_define_method(d->mrb_, d->mrb_->object_class, byteArray, methodImpl, ARGS_NONE());
+    mrb_define_method(d->mrb_, d->mrb_->kernel_module, byteArray, methodImpl, ARGS_NONE());
 }
 
 }

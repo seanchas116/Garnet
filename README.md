@@ -229,12 +229,6 @@ Rectangle {
         }
     }
 }
-
-Garnet.Engine {
-    Component.onCompleted: {
-        console.log(engine.evaluate("'Helo, world!!'"))
-    }
-}
 ```
 
 ### Value conversion between Qt and mruby

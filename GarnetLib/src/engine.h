@@ -15,6 +15,9 @@ class Value;
 class Engine : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(const bool hasError READ hasError NOTIFY hasErrorChanged)
+    Q_PROPERTY(const QString error READ error NOTIFY errorChanged)
+    Q_PROPERTY(const QStringList backtrace READ backtrace NOTIFY backtraceChanged)
 
 public:
 
@@ -25,8 +28,9 @@ public:
     Q_INVOKABLE void collectGarbage();
     Q_INVOKABLE QVariant evaluate(const QString &script, const QString &fileName = "*script*");
 
-    Q_INVOKABLE QString error() const;
-    Q_INVOKABLE QStringList backtrace() const;
+    bool hasError() const;
+    QString error() const;
+    QStringList backtrace() const;
 
     template <class T> void registerClass() { registerClass(&T::staticMetaObject); }
     void registerClass(const QMetaObject *metaObject);
@@ -37,6 +41,12 @@ public:
     BridgeClass &bridgeClass();
     StaticBridgeClassManager &staticBridgeClassManager();
     static Engine *findByMrb(mrb_state *mrb);
+
+signals:
+
+    void hasErrorChanged(bool);
+    void errorChanged(const QString &);
+    void backtraceChanged(const QStringList &);
 
 private:
     class Private;

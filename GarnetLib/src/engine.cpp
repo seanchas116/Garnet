@@ -26,6 +26,7 @@ public:
     QScopedPointer<StaticBridgeClassManager> staticBridgeClassManager;
     QHash<QByteArray, QVariant> registeredVariants_;
 
+    bool hasError_ = false;
     QString error_;
     QStringList backtrace_;
 
@@ -33,24 +34,53 @@ public:
 
     static void initializeGlobal();
 
+    void setHasError(bool hasError) {
+        if (hasError_ != hasError) {
+            hasError_ = hasError;
+            emit q->hasErrorChanged(hasError);
+        }
+    }
+
+    void setError(const QString &error) {
+        if (error_ != error) {
+            error_ = error;
+            emit q->errorChanged(error);
+        }
+    }
+
+    void setBacktrace(const QStringList &backtrace) {
+        if (backtrace_ != backtrace) {
+            backtrace_ = backtrace;
+            emit q->backtraceChanged(backtrace);
+        }
+    }
+
     void dumpError()
     {
-        if (!mrb_->exc)
-            return;
+        if (mrb_->exc) {
+            ArenaSaver as(mrb_);
 
-        ArenaSaver as(mrb_);
+            auto exc = mrb_obj_value(mrb_->exc);
 
-        auto exc = mrb_obj_value(mrb_->exc);
+            auto backtraceVlist = Conversion::toQVariant(mrb_, mrb_funcall(mrb_, exc, "backtrace", 0)).toList();
+            QStringList backtrace;
+            backtrace.reserve(backtraceVlist.size());
+            for (const auto &v : backtraceVlist) {
+                backtrace << v.toString();
+            }
 
-        auto backtraceVlist = Conversion::toQVariant(mrb_, mrb_funcall(mrb_, exc, "backtrace", 0)).toList();
-        backtrace_.reserve(backtraceVlist.size());
-        for (const auto &v : backtraceVlist) {
-            backtrace_ << v.toString();
+            auto error = Conversion::toQVariant(mrb_, mrb_funcall(mrb_, exc, "inspect", 0)).toString();
+            mrb_->exc = nullptr;
+
+            setHasError(true);
+            setError(error);
+            setBacktrace(backtrace);
         }
-
-        error_ = Conversion::toQVariant(mrb_, mrb_funcall(mrb_, exc, "inspect", 0)).toString();
-
-        mrb_->exc = nullptr;
+        else {
+            setHasError(false);
+            setError(QString());
+            setBacktrace(QStringList());
+        }
     }
 };
 
@@ -142,6 +172,11 @@ QVariant Engine::evaluate(const QString &script, const QString &fileName)
     d->dumpError();
 
     return Conversion::toQVariant(mrb, value);
+}
+
+bool Engine::hasError() const
+{
+    return d->hasError_;
 }
 
 QString Engine::error() const

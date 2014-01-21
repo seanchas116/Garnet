@@ -5,6 +5,7 @@
 #include "utils.h"
 
 #include <QVariant>
+#include <QStringList>
 
 #include <mruby.h>
 #include <mruby/compile.h>

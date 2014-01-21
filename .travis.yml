@@ -15,6 +15,6 @@ env:
 before_script:
   - git submodule update --init --recursive
 script:
-  - qmake -qt=qt5 -r QMAKE_CC=$CC QMAKE_CXX=$CXX QMAKE_CXXFLAGS+="-std=c++11"
+  - qmake -qt=qt5 -r QMAKE_CC=$CC QMAKE_CXX=$CXX
   - make
   - ./test/garnet_test

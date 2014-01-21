@@ -14,7 +14,7 @@ void TestGarnetEngine::testError()
                     "raise 'error'\n"
                     "end", "*script*");
     QCOMPARE(engine.error(), QString("*script*:2: error (RuntimeError)"));
-    QVERIFY(!engine.backtrace().isEmpty());
+    QCOMPARE(engine.backtrace().size(), 2);
 }
 
 ADD_TEST_CLASS(TestGarnetEngine)

@@ -9,6 +9,8 @@
 #include <mruby.h>
 #include <mruby/compile.h>
 
+extern "C" mrb_value mrb_get_backtrace(mrb_state *mrb, mrb_value self);
+
 namespace Garnet {
 
 class Engine::Private
@@ -62,14 +64,15 @@ public:
 
             auto exc = mrb_obj_value(mrb_->exc);
 
-            auto backtraceVlist = Conversion::toQVariant(mrb_, mrb_funcall(mrb_, exc, "backtrace", 0)).toList();
+            auto backtraceVlist = Conversion::toQVariant(mrb_, mrb_get_backtrace(mrb_, exc)).toList();
             QStringList backtrace;
             backtrace.reserve(backtraceVlist.size());
             for (const auto &v : backtraceVlist) {
                 backtrace << v.toString();
             }
 
-            auto error = Conversion::toQVariant(mrb_, mrb_funcall(mrb_, exc, "inspect", 0)).toString();
+            auto error = Conversion::toQVariant(mrb_, mrb_inspect(mrb_, exc)).toString();
+
             mrb_->exc = nullptr;
 
             setHasError(true);

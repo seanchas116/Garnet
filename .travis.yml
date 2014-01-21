@@ -2,13 +2,17 @@ language: cpp
 compiler:
   - gcc
   - clang
+install:
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+  - sudo apt-get update -qq
+  - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
 env:
   - CONFIG=debug QT=qt5
   - CONFIG=release QT=qt5
 before_script:
   - git submodule update --init --recursive
-  - export CXX="$CXX -std=c++11"
 script:
-  - qmake -r
+  - qmake -r QMAKE_CC=$CC QMAKE_CXX=$CXX QMAKE_CXXFLAGS+="-std=c++11"
   - make
   - ./test/garnet_test

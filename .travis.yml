@@ -1,0 +1,14 @@
+language: cpp
+compiler:
+  - gcc
+  - clang
+env:
+  - CONFIG=debug QT=qt5
+  - CONFIG=release QT=qt5
+before_script:
+  - git submodule init
+  - git submodule update
+script:
+  - qmake -r
+  - make
+  - ./test/garnet_test

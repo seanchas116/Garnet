@@ -1,7 +1,7 @@
 QT       += testlib qml
 QT       -= gui
 
-TARGET = tst_garnet
+TARGET = garnet_test
 CONFIG   += console
 CONFIG   -= app_bundle
 

@@ -6,6 +6,7 @@
 #include <QMetaObject>
 #include <QMetaMethod>
 #include <array>
+#include <cstring>
 
 namespace Garnet {
 

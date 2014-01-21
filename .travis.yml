@@ -12,8 +12,6 @@ install:
 env:
   - CONFIG=debug
   - CONFIG=release
-before_script:
-  - git submodule update --init --recursive
 script:
   - qmake -qt=qt5 -r QMAKE_CC=$CC QMAKE_CXX=$CXX
   - make

@@ -6,8 +6,7 @@ env:
   - CONFIG=debug QT=qt5
   - CONFIG=release QT=qt5
 before_script:
-  - git submodule init
-  - git submodule update
+  - git submodule update --init --recursive
 script:
   - qmake -r
   - make

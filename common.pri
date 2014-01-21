@@ -1,6 +1,6 @@
 CONFIG += c++11
 
-mruby_path = $$PWD/../mruby
+mruby_path = $$PWD/mruby
 
 PRE_TARGETDEPS = $$mruby_path/build/host/lib/libmruby.a
 INCLUDEPATH += $$mruby_path/include

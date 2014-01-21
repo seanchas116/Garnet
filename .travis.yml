@@ -10,11 +10,11 @@ install:
   - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
 env:
-  - CONFIG=debug QT=qt5
-  - CONFIG=release QT=qt5
+  - CONFIG=debug
+  - CONFIG=release
 before_script:
   - git submodule update --init --recursive
 script:
-  - qmake -r QMAKE_CC=$CC QMAKE_CXX=$CXX QMAKE_CXXFLAGS+="-std=c++11"
+  - qmake -qt=qt5 -r QMAKE_CC=$CC QMAKE_CXX=$CXX QMAKE_CXXFLAGS+="-std=c++11"
   - make
   - ./test/garnet_test

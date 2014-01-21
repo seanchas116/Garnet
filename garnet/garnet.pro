@@ -2,8 +2,7 @@ QT       -= gui
 
 TARGET = garnet
 TEMPLATE = lib
-
-CONFIG += staticlib
+CONFIG += static
 
 DEFINES += GARNETLIB_LIBRARY
 
@@ -22,16 +21,4 @@ HEADERS += src/garnetlib_global.h \
 	src/conversion.h \
     src/utils.h
 
-unix:!symbian {
-    maemo5 {
-        target.path = /opt/usr/lib
-    } else {
-        target.path = /usr/lib
-    }
-    INSTALLS += target
-}
-
-CONFIG += c++11
-
-DESTDIR = $$PWD/bin
-INCLUDEPATH += include /usr/local/include
+include(../common.pri)

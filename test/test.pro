@@ -1,5 +1,4 @@
 QT       += testlib qml
-
 QT       -= gui
 
 TARGET = tst_garnet
@@ -8,18 +7,11 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-
 SOURCES += \
     test.cpp \
     testgarnetvalue.cpp \
     testgarnetbridgeclass.cpp \
     testgarnetengine.cpp
-DEFINES += SRCDIR=\\\"$$PWD/\\\"
-
-CONFIG += c++11
-
-INCLUDEPATH += $${PWD}/../GarnetLib/include /usr/local/include
-LIBS += -L$${PWD}/../GarnetLib/bin -lgarnet -L/usr/local/lib -lmruby
 
 HEADERS += \
     test.h \
@@ -32,3 +24,8 @@ RESOURCES += \
 
 OTHER_FILES += \
     test.qml
+
+INCLUDEPATH += $${PWD}/../garnet/include
+LIBS += $${OUT_PWD}/../garnet/libgarnet.a
+
+include(../common.pri)

@@ -1,2 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS = GarnetLib GarnetTest
+SUBDIRS = garnet test

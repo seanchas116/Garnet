@@ -1,6 +1,8 @@
 Garnet
 ======
 
+[![Build Status](https://travis-ci.org/iofg2100/Garnet.png?branch=master)](https://travis-ci.org/iofg2100/Garnet)
+
 Garnet provides mruby bindings for Qt objects.
 
 ## Features

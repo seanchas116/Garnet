@@ -1,18 +1,9 @@
-language: cpp
-compiler:
-  - gcc
-  - clang
+language: objective-c
 install:
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-  - sudo add-apt-repository ppa:ubuntu-sdk-team/ppa -y
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq qt5-qmake qtbase5-dev qtdeclarative5-dev
-  - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
-env:
-  - CONFIG=debug
-  - CONFIG=release
+  - brew update
+  - brew install qt5
+  - brew link qt5 --force
 script:
-  - qmake -qt=qt5 -r QMAKE_CC=$CC QMAKE_CXX=$CXX
+  - qmake -r
   - make
   - ./test/garnet_test

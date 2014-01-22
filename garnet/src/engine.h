@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QVariant>
+#include <QStringList>
 
 struct mrb_state;
 
